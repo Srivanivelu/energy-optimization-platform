@@ -1,8 +1,7 @@
 from flask import Flask, render_template, request, jsonify, session, redirect, url_for
-import pandas as pd
+import os
 import numpy as np
 from scipy.optimize import minimize
-import json
 
 app = Flask(__name__)
 app.secret_key = 'energy_optimization_2025'
@@ -10,7 +9,7 @@ app.secret_key = 'energy_optimization_2025'
 # Admin PIN
 ADMIN_PIN = '1234'
 
-# Your actual data as provided
+# Your energy data storage class
 class EnergyDatabase:
     def __init__(self):
         # Non-renewable consumption data (from your dataset)
@@ -55,6 +54,7 @@ class EnergyDatabase:
             '2033': {'total_met': 428.22, 'percentage': 24.42, 'demand': 1771.09}
         }
 
+# Initialize database
 db = EnergyDatabase()
 
 @app.route('/')
@@ -171,9 +171,7 @@ def run_optimization(year):
     
     return jsonify({'success': False, 'error': 'Optimization failed'})
 
-import os  # Add this at the top if not already there
-
-# Replace the last if __name__ == '__main__': section with:
+# Cloud deployment configuration
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port, debug=False)
