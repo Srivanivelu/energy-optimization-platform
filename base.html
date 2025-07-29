@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Energy Optimization Platform{% endblock %}</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1300px;
+            margin: 0 auto;
+            padding: 8px; /* Reduced from 15px */
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 10px; /* Reduced from 20px */
+            color: white;
+            padding: 12px; /* Reduced from 20px */
+        }
+
+        .header h1 {
+            font-size: 2rem; /* Reduced from 2.5rem */
+            font-weight: 700;
+            margin-bottom: 4px; /* Reduced from 8px */
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 0.85rem; /* Reduced from 1rem */
+            opacity: 0.9;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px; /* Reduced from 15px */
+            padding: 12px; /* Reduced from 20px */
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            margin-bottom: 10px; /* Reduced from 20px */
+            transition: transform 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-1px);
+        }
+
+        .card h2 {
+            font-size: 1rem; /* Reduced from 1.2rem */
+            margin-bottom: 8px; /* Reduced from 15px */
+            color: #2c3e50;
+        }
+
+        .btn {
+            background: linear-gradient(45deg, #43cea2, #185a9d);
+            color: white;
+            border: none;
+            padding: 6px 12px; /* Reduced from 10px 18px */
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.8rem; /* Reduced from 0.9rem */
+            transition: all 0.3s ease;
+        }
+
+        .btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(67, 206, 162, 0.3);
+        }
+
+        .admin-link {
+            position: fixed;
+            top: 8px;
+            right: 8px;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            padding: 6px 10px;
+            border-radius: 6px;
+            text-decoration: none;
+            backdrop-filter: blur(10px);
+            font-size: 0.8rem;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 5px;
+            }
+            
+            .header h1 {
+                font-size: 1.6rem;
+            }
+            
+            .card {
+                padding: 8px;
+                margin-bottom: 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <a href="/admin" class="admin-link">
+        <i class="fas fa-cog"></i> Admin
+    </a>
+    
+    <div class="container">
+        {% block content %}{% endblock %}
+    </div>
+</body>
+</html>
