@@ -1,0 +1,232 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard - Energy Platform{% endblock %}
+
+{% block content %}
+<div class="header">
+    <h1><i class="fas fa-cogs"></i> Admin Dashboard</h1>
+    <a href="/admin/logout" style="background: rgba(255,255,255,0.2); color: white; padding: 4px 8px; border-radius: 4px; text-decoration: none; font-size: 0.7rem;">
+        <i class="fas fa-sign-out-alt"></i> Logout
+    </a>
+</div>
+
+<div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+    <div class="card">
+        <h2><i class="fas fa-leaf"></i> Renewable Data</h2>
+        <select id="yearSelect" style="width: 100%; padding: 4px; margin-bottom: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 0.8rem;">
+            <option value="2024">2024</option>
+            <option value="2025" selected>2025</option>
+            <option value="2026">2026</option>
+            <option value="2027">2027</option>
+            <option value="2028">2028</option>
+            <option value="2029">2029</option>
+            <option value="2030">2030</option>
+            <option value="2031">2031</option>
+            <option value="2032">2032</option>
+            <option value="2033">2033</option>
+        </select>
+        
+        <div id="renewableInputs"></div>
+        <button class="btn" onclick="updateRenewableData()" style="width: 100%; margin-top: 6px;">
+            <i class="fas fa-save"></i> Update
+        </button>
+    </div>
+    
+    <div class="card">
+        <h2><i class="fas fa-fire"></i> Non-Renewable</h2>
+        <div id="nonRenewableInputs"></div>
+        <button class="btn" onclick="updateNonRenewableData()" style="width: 100%; margin-top: 6px;">
+            <i class="fas fa-save"></i> Update
+        </button>
+    </div>
+    
+    <div class="card">
+        <h2><i class="fas fa-calculator"></i> Optimization</h2>
+        <p style="margin-bottom: 8px; color: #666; font-size: 0.75rem;">Recalculate results</p>
+        <button class="btn" onclick="runOptimization()" style="width: 100%;">
+            <i class="fas fa-play"></i> Run
+        </button>
+        <div id="optimizationResult" style="margin-top: 6px;"></div>
+    </div>
+</div>
+
+<!-- Fixed Height Chart Container -->
+<div class="card">
+    <h2><i class="fas fa-chart-line"></i> Overview</h2>
+    <div style="position: relative; height: 140px; width: 100%;">
+        <canvas id="overviewChart"></canvas>
+    </div>
+</div>
+
+<script>
+let currentYear = '2025';
+let allData = {};
+let overviewChart = null;
+
+document.getElementById('yearSelect').addEventListener('change', function() {
+    currentYear = this.value;
+    loadAdminData();
+});
+
+function loadAdminData() {
+    fetch('/api/all_years_data')
+        .then(response => response.json())
+        .then(data => {
+            allData = data;
+            populateInputs();
+            createOverviewChart();
+        });
+}
+
+function populateInputs() {
+    const yearData = allData[currentYear];
+    
+    const renewableDiv = document.getElementById('renewableInputs');
+    renewableDiv.innerHTML = `
+        <div style="margin-bottom: 6px;">
+            <label style="display: block; margin-bottom: 2px; font-size: 0.7rem;"><i class="fas fa-wind"></i> Wind:</label>
+            <input type="number" id="wind" value="${yearData.renewable.wind}" step="0.01" style="width: 100%; padding: 3px; border: 1px solid #ddd; border-radius: 3px; font-size: 0.75rem;">
+        </div>
+        <div style="margin-bottom: 6px;">
+            <label style="display: block; margin-bottom: 2px; font-size: 0.7rem;"><i class="fas fa-sun"></i> Solar:</label>
+            <input type="number" id="solar" value="${yearData.renewable.solar}" step="0.01" style="width: 100%; padding: 3px; border: 1px solid #ddd; border-radius: 3px; font-size: 0.75rem;">
+        </div>
+        <div style="margin-bottom: 6px;">
+            <label style="display: block; margin-bottom: 2px; font-size: 0.7rem;"><i class="fas fa-seedling"></i> Bio:</label>
+            <input type="number" id="bio_power" value="${yearData.renewable.bio_power}" step="0.01" style="width: 100%; padding: 3px; border: 1px solid #ddd; border-radius: 3px; font-size: 0.75rem;">
+        </div>
+        <div style="margin-bottom: 6px;">
+            <label style="display: block; margin-bottom: 2px; font-size: 0.7rem;"><i class="fas fa-tint"></i> Hydro:</label>
+            <input type="number" id="small_hydro" value="${yearData.renewable.small_hydro}" step="0.01" style="width: 100%; padding: 3px; border: 1px solid #ddd; border-radius: 3px; font-size: 0.75rem;">
+        </div>
+    `;
+    
+    const nonRenewableDiv = document.getElementById('nonRenewableInputs');
+    nonRenewableDiv.innerHTML = `
+        <div style="margin-bottom: 6px;">
+            <label style="display: block; margin-bottom: 2px; font-size: 0.7rem;"><i class="fas fa-fire"></i> Coal:</label>
+            <input type="number" id="coal" value="${yearData.non_renewable.coal}" step="0.01" style="width: 100%; padding: 3px; border: 1px solid #ddd; border-radius: 3px; font-size: 0.75rem;">
+        </div>
+        <div style="margin-bottom: 6px;">
+            <label style="display: block; margin-bottom: 2px; font-size: 0.7rem;"><i class="fas fa-gas-pump"></i> Oil:</label>
+            <input type="number" id="petroleum" value="${yearData.non_renewable.petroleum}" step="0.01" style="width: 100%; padding: 3px; border: 1px solid #ddd; border-radius: 3px; font-size: 0.75rem;">
+        </div>
+        <div style="margin-bottom: 6px;">
+            <label style="display: block; margin-bottom: 2px; font-size: 0.7rem;"><i class="fas fa-burn"></i> Gas:</label>
+            <input type="number" id="natural_gas" value="${yearData.non_renewable.natural_gas}" step="0.01" style="width: 100%; padding: 3px; border: 1px solid #ddd; border-radius: 3px; font-size: 0.75rem;">
+        </div>
+    `;
+}
+
+function updateRenewableData() {
+    const values = {
+        wind: parseFloat(document.getElementById('wind').value),
+        solar: parseFloat(document.getElementById('solar').value),
+        bio_power: parseFloat(document.getElementById('bio_power').value),
+        small_hydro: parseFloat(document.getElementById('small_hydro').value)
+    };
+    
+    fetch('/api/update_data', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ year: currentYear, category: 'renewable', values: values })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification('Updated!');
+            loadAdminData();
+        }
+    });
+}
+
+function updateNonRenewableData() {
+    const values = {
+        coal: parseFloat(document.getElementById('coal').value),
+        petroleum: parseFloat(document.getElementById('petroleum').value),
+        natural_gas: parseFloat(document.getElementById('natural_gas').value)
+    };
+    
+    fetch('/api/update_data', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ year: currentYear, category: 'non_renewable', values: values })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification('Updated!');
+            loadAdminData();
+        }
+    });
+}
+
+function runOptimization() {
+    fetch(`/api/run_optimization/${currentYear}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                document.getElementById('optimizationResult').innerHTML = `
+                    <div style="background: #00b894; color: white; padding: 6px; border-radius: 4px; font-size: 0.7rem;">
+                        <strong>${currentYear}:</strong><br>
+                        ${data.total_met.toFixed(1)} BU<br>
+                        ${data.percentage_met.toFixed(1)}%
+                    </div>
+                `;
+            }
+        });
+}
+
+function showNotification(message) {
+    const notification = document.createElement('div');
+    notification.style.cssText = `
+        position: fixed; top: 10px; right: 10px; padding: 6px 10px; border-radius: 4px;
+        color: white; font-size: 0.7rem; z-index: 1000; background: #00b894;
+    `;
+    notification.textContent = message;
+    document.body.appendChild(notification);
+    setTimeout(() => notification.remove(), 1500);
+}
+
+function createOverviewChart() {
+    const ctx = document.getElementById('overviewChart').getContext('2d');
+    if (overviewChart) overviewChart.destroy();
+    
+    const years = Object.keys(allData).sort();
+    const renewableData = years.map(year => allData[year].optimization.total_met);
+    
+    overviewChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: years,
+            datasets: [{
+                data: renewableData,
+                borderColor: '#667eea',
+                backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                borderWidth: 2,
+                fill: true,
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { 
+                legend: { display: false } 
+            },
+            scales: { 
+                x: { 
+                    ticks: { font: { size: 9 } } 
+                },
+                y: { 
+                    beginAtZero: true,
+                    ticks: { font: { size: 9 } } 
+                }
+            }
+        }
+    });
+}
+
+loadAdminData();
+</script>
+{% endblock %}
